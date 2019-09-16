@@ -1,0 +1,20 @@
+Package: ComexstatR
+Type: Package
+Title: Pesquisa os dados disponíveis no sistema Comex Stat
+Version: 0.1.0
+Author: XXXX
+Maintainer: XXXX <XXX@XXX.NET>
+Description: Conjunto de funções para consultar os dados do Comex Stat.
+License: 
+Encoding: UTF-8
+LazyData: true
+Imports:
+    dplyr,
+    glue,
+    httr,
+    jsonlite,
+    purrr,
+    stringr,
+    tibble,
+    utils
+RoxygenNote: 6.1.1
