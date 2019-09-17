@@ -84,6 +84,10 @@ As funções \code{pesquisar_uf}, \code{pesquisar_mun} e \code{pesquisar_urf} se
 para pesquisar a Unidade da Federação (UF), o município e a Unidade da Receita Federal (URF).
 
 A função \code{pesquisar_via} se destina a pesquisar o meio de transporte.
+
+Todas as funções podem ter como argumento texto ou código.
+
+Para acessar a tabela completa basta executar a função sem argumento.
 }
 \examples{
  pesquisar_ncm('010')
