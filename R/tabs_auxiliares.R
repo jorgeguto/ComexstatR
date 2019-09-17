@@ -22,6 +22,11 @@
 #'
 #' A função \code{pesquisar_via} se destina a pesquisar o meio de transporte.
 #'
+#' Todas as funções podem ter como argumento texto ou código.
+#'
+#' Para acessar a tabela completa basta executar a função sem argumento.
+#'
+#'
 NULL
 
 
