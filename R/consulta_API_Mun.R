@@ -127,7 +127,9 @@ pesquisar_comex_stat_mun <- function(ano_inicial = substr(Sys.Date(), 1,4 ) , an
 
 
   #Codifica filtro para URL
-  filtro_cs <- as.character(filtro_cs) %>% iconv(to = 'UTF8') %>% utils::URLencode()
+  filtro_cs <- as.character(filtro_cs)
+  filtro_cs <- iconv(filtro_cs, to = 'UTF8')
+  filtro_cs <- utils::URLencode(filtro_cs)
 
   #endereço base da API
   comex_stat <- "http://api.comexstat.mdic.gov.br/cities?filter="
@@ -137,8 +139,8 @@ pesquisar_comex_stat_mun <- function(ano_inicial = substr(Sys.Date(), 1,4 ) , an
 
   #consulta a API, extrai os dados e converte para um dataframe
   pesquisa_cs <- httr::GET(url_completa)
-  pesquisa_cs <- httr::content(pesquisa_cs, "text", encoding = 'UTF8') %>%
-    jsonlite::fromJSON(flatten = TRUE)
+  pesquisa_cs <- httr::content(pesquisa_cs, "text", encoding = 'UTF8')
+  pesquisa_cs <- jsonlite::fromJSON(pesquisa_cs, flatten = TRUE)
   return(as.data.frame(pesquisa_cs[[1]][[1]]))
 
 
