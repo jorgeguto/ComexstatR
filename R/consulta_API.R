@@ -149,8 +149,13 @@ pesquisar_comex_stat <- function(ano_inicial = substr(Sys.Date(), 1,4 ) , ano_fi
   pesquisa_cs <- httr::GET(url_completa)
   pesquisa_cs <- httr::content(pesquisa_cs, "text", encoding = 'UTF8')
   pesquisa_cs <- jsonlite::fromJSON(pesquisa_cs,flatten = TRUE)
-  return(as.data.frame(pesquisa_cs[[1]][[1]]))
+  resposta_consulta <- as.data.frame(pesquisa_cs[[1]][[1]])
 
+  var_num = c('vlFob', 'kgLiquido', 'qtEstat')
+
+  resposta_consulta <- dplyr::mutate_at(resposta_consulta, var_num[var_num %in% colnames(resposta_consulta)], as.numeric)
+
+  return(resposta_consulta)
 
 }
 
