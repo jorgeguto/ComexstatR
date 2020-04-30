@@ -77,7 +77,7 @@ pesquisar_comex_stat_mun <- function(ano_inicial = substr(Sys.Date(), 1,4 ) , an
         if (length(filtros_esp[[aux]]) != 0) {
 
           filtra <- c(filtra, glue::glue('{{"item":[{lista_colapsada}],"idInput":"{lista_nomes[i]}"}}',
-                                         lista_colapsada = toString(shQuote(filtros_esp[[aux]]))))
+                                         lista_colapsada = toString(shQuote(filtros_esp[[aux]], type = "cmd"))))
 
         }
       }
