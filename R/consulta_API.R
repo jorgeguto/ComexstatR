@@ -83,7 +83,7 @@ pesquisar_comex_stat <- function(ano_inicial = substr(Sys.Date(), 1,4 ) , ano_fi
         if (length(filtros_esp[[aux]]) != 0) {
 
           filtra <- c(filtra, glue::glue('{{"item":[{lista_colapsada}],"idInput":"{lista_nomes[i]}"}}',
-                                   lista_colapsada = toString(shQuote(filtros_esp[[aux]], type = "cmd"))))
+                                   lista_colapsada = toString(shQuote(filtros_esp[[aux]]))))
 
         }
       }
@@ -147,16 +147,26 @@ pesquisar_comex_stat <- function(ano_inicial = substr(Sys.Date(), 1,4 ) , ano_fi
 
   #consulta a API, extrai os dados e converte para um dataframe
   pesquisa_cs <- httr::GET(url_completa)
+
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa_cs$status_code!=200) {
+    return('Essa consulta é muito extensa (mais de 150 mil linhas) ou extrapolou o tempo de processamento permitido.')
+  }
+
   pesquisa_cs <- httr::content(pesquisa_cs, "text", encoding = 'UTF8')
   pesquisa_cs <- jsonlite::fromJSON(pesquisa_cs,flatten = TRUE)
-  resposta_consulta <- as.data.frame(pesquisa_cs[[1]][[1]])
+  pesquisa_cs <- as.data.frame(pesquisa_cs[[1]][[1]])
 
-  var_num = c('vlFob', 'kgLiquido', 'qtEstat')
+  if (length(pesquisa_cs)==0) {
+    return('Esta consulta não trouxe nenhum resultado! Favor altere os parâmetros e tente novamente.')
+  }
 
-  resposta_consulta <- dplyr::mutate_at(resposta_consulta, var_num[var_num %in% colnames(resposta_consulta)], as.numeric)
+  if(qtd_est == 'true' & !('ncm' %in% detalhamentos)){
+    pesquisa_cs <- dplyr::select(pesquisa_cs,-qtEstat)
+    warning('NCM precisa estar em "detalhamentos" para que a quantidade estatística seja mostrada.')
+  }
 
-  return(resposta_consulta)
-
+  return(pesquisa_cs)
 }
 
 

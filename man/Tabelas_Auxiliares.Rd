@@ -22,6 +22,10 @@
 \alias{pesquisar_cuci_pos}
 \alias{pesquisar_cuci_cap}
 \alias{pesquisar_cuci_sec}
+\alias{pesquisar_isic_classe}
+\alias{pesquisar_isic_grupo}
+\alias{pesquisar_isic_div}
+\alias{pesquisar_isic_sec}
 \title{Pesquisar tabelas auxiliares}
 \usage{
 pesquisar_ncm('pattern')
@@ -61,6 +65,14 @@ pesquisar_cuci_pos('pattern')
 pesquisar_cuci_cap('pattern')
 
 pesquisar_cuci_sec('pattern')
+
+pesquisar_isic_classe('pattern')
+
+pesquisar_isic_grupo('pattern')
+
+pesquisar_isic_div('pattern')
+
+pesquisar_isic_sec('pattern')
 }
 \arguments{
 \item{pattern}{Trecho a ser pesquisado (código ou texto)}
@@ -74,8 +86,12 @@ As funções \code{pesquisar_cgce3}, \code{pesquisar_cgce2} e \code{pesquisar_cg
 pesquisar a Classificação por Grandes Categorias Econômicas (CGCE).
 
 As funções \code{pesquisar_cuci_item}, \code{pesquisar_cuci_sub}, \code{pesquisar_cuci_pos}, \code{pesquisar_cuci_cap}
-e pesquisar_cuci_sec  são utilizadas para pesquisar a Classificação Uniforme
+e \code{pesquisar_cuci_sec}  são utilizadas para pesquisar a Classificação Uniforme
 para o Comércio Internacional (CUCI).
+
+As funções \code{pesquisar_isic_classe}, \code{pesquisar_isic_grupo}, \code{pesquisar_isic_div}
+e \code{pesquisar_isic_sec}  são utilizadas para pesquisar a Classificação Internacional Padrão por
+Aatividades Econômicas (ISIC).'
 
 As funções \code{pesquisar_pais} e \code{pesquisar_blocos} se destinam para a pesquisa de países e blocos
 econômicos.
@@ -85,14 +101,16 @@ para pesquisar a Unidade da Federação (UF), o município e a Unidade da Receit
 
 A função \code{pesquisar_via} se destina a pesquisar o meio de transporte.
 
-Todas as funções podem ter como argumento texto ou código.
+As funções relacionadas ao SH, à CGCE, à CUCI e à ISIC podem ter como argumento trechos da descição ou do código.
+
+Para as demais funções o argumento deve ser um trecho da descrição.
 
 Para acessar a tabela completa basta executar a função sem argumento.
 }
 \examples{
  pesquisar_ncm('010')
 
- pesquisar_sh6('aço')
+ pesquisar_sh6('aÃ§o')
 
  pesquisar_sh4('frutas')
 
@@ -106,7 +124,7 @@ Para acessar a tabela completa basta executar a função sem argumento.
 
  pesquisar_uf('bahia')
 
- pesquisar_mun('são paulo')
+ pesquisar_mun('sÃ£o paulo')
 
  pesquisar_via('aerea')
 
@@ -124,8 +142,16 @@ Para acessar a tabela completa basta executar a função sem argumento.
 
  pesquisar_cuci_pos('queijo')
 
- pesquisar_cuci_cap('café')
+ pesquisar_cuci_cap('cafÃ©')
 
  pesquisar_cuci_sec('obras')
+
+ pesquisar_isic_classe('plÃ¡sticos')
+
+ pesquisar_isic_grupo('cultivo')
+
+ pesquisar_isic_div('pesca')
+
+ pesquisar_isic_sec('agro')
 
 }

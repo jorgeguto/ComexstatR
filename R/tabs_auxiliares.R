@@ -11,8 +11,12 @@
 #' pesquisar a Classificação por Grandes Categorias Econômicas (CGCE).
 #'
 #' As funções \code{pesquisar_cuci_item}, \code{pesquisar_cuci_sub}, \code{pesquisar_cuci_pos}, \code{pesquisar_cuci_cap}
-#' e pesquisar_cuci_sec  são utilizadas para pesquisar a Classificação Uniforme
+#' e \code{pesquisar_cuci_sec}  são utilizadas para pesquisar a Classificação Uniforme
 #' para o Comércio Internacional (CUCI).
+#'
+#' As funções \code{pesquisar_isic_classe}, \code{pesquisar_isic_grupo}, \code{pesquisar_isic_div}
+#' e \code{pesquisar_isic_sec}  são utilizadas para pesquisar a Classificação Internacional Padrão por
+#'Aatividades Econômicas (ISIC).'
 #'
 #' As funções \code{pesquisar_pais} e \code{pesquisar_blocos} se destinam para a pesquisa de países e blocos
 #' econômicos.
@@ -22,7 +26,9 @@
 #'
 #' A função \code{pesquisar_via} se destina a pesquisar o meio de transporte.
 #'
-#' Todas as funções podem ter como argumento texto ou código.
+#' As funções relacionadas ao SH, à CGCE, à CUCI e à ISIC podem ter como argumento trechos da descição ou do código.
+#'
+#' Para as demais funções o argumento deve ser um trecho da descrição.
 #'
 #' Para acessar a tabela completa basta executar a função sem argumento.
 #'
@@ -40,23 +46,40 @@ NULL
 #' @rdname Tabelas_Auxiliares
 pesquisar_ncm <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noNcmpt"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/product/ncm', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   NCM$NO_NCM_POR,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   NCM$CO_NCM,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(NCM[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::mutate(pesquisa,
+                            text = substring(text,12))
+  colnames(pesquisa) <- c('NCM', 'Descrição')
+
+  return(pesquisa)
 }
+
 
 #função para consultar os SH6s
 #' @usage
@@ -68,24 +91,38 @@ pesquisar_ncm <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_sh6 <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noSh6pt"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/harmonized-system/subposition', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   SH6$NO_SH6_POR,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   SH6$CO_SH6,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(SH6[indice, ]))
-}
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
 
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-text)
+  colnames(pesquisa) <- c('SH6', 'Descrição')
+
+  return(pesquisa)
+}
 
 #função para consultar os SH4s
 #' @usage
@@ -97,22 +134,37 @@ pesquisar_sh6 <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_sh4 <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noSh4pt"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/harmonized-system/position', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   SH4$NO_SH4_POR,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   SH4$CO_SH4,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(SH4[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-text)
+  colnames(pesquisa) <- c('SH4', 'Descrição')
+
+  return(pesquisa)
 }
 
 #função para consultar os SH2s
@@ -125,23 +177,39 @@ pesquisar_sh4 <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_sh2 <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noSh2pt"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/harmonized-system/chapter', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   SH2$NO_SH2_POR,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   SH2$CO_SH2,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(SH2[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-text)
+  colnames(pesquisa) <- c('SH2', 'Descrição')
+
+  return(pesquisa)
 }
+
 
 #função para consultar as Seções da NCM
 #' @usage
@@ -153,22 +221,37 @@ pesquisar_sh2 <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_ncm_sec <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noSecpt"}'
+  )
 
-  if (texto) {
-    indice <- grep(pattern,
-                   SEC$SEC,
-                   ignore.case = TRUE)
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/harmonized-system/section', query = params)
 
-  } else{
-    pattern <- utils::as.roman(pattern)
-    pattern <- glue::glue("\\<{pattern}\\>")
-    indice <- grep(pattern,
-                   SEC$SEC,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
+
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(SEC[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-text)
+  colnames(pesquisa) <- c('NCM_SEC', 'Descrição')
+
+  return(pesquisa)
 }
 
 
@@ -182,22 +265,36 @@ pesquisar_ncm_sec <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_pais <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noPaispt"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/location/countries', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   PAIS$NO_PAIS,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   PAIS$CO_PAIS,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(PAIS[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  colnames(pesquisa) <- c('CO_PAIS', 'País')
+
+  return(pesquisa)
 }
 
 
@@ -211,22 +308,37 @@ pesquisar_pais <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_blocos <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noBlocopt"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/location/blocks', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   BLOCOS$NO_BLOCO,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   BLOCOS$CO_BLOCO,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(BLOCOS[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::distinct(pesquisa, id, .keep_all = TRUE)
+  colnames(pesquisa) <- c('CO_BLOCO', 'Bloco')
+
+  return(pesquisa)
 }
 
 
@@ -240,23 +352,39 @@ pesquisar_blocos <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_uf <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noUf"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/location/states', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   UF$NO_UF,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   UF$CO_UF,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(UF[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,id, text)
+  colnames(pesquisa) <- c('CO_UF', 'UF')
+
+  return(pesquisa)
 }
+
 
 #função para consultar os municípios
 #' @usage
@@ -268,23 +396,39 @@ pesquisar_uf <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_mun <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noMunMin"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/location/cities', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   MUN$NO_MUN_MIN,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   MUN$CO_MUN_GEO,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(MUN[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-noMunMin)
+  colnames(pesquisa) <- c('CO_MUN', 'Município')
+
+  return(pesquisa)
 }
+
 
 #função para consultar a Via
 #' @usage
@@ -296,22 +440,36 @@ pesquisar_mun <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_via <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noVia"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/location/via', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   VIA$NO_VIA,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   VIA$CO_VIA,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(VIA[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  colnames(pesquisa) <- c('CO_VIA', 'Via')
+
+  return(pesquisa)
 }
 
 #função para consultar a URF
@@ -324,22 +482,38 @@ pesquisar_via <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_urf <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noUrf"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/location/urf', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   URF$NO_URF,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   URF$CO_URF,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(URF[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::mutate(pesquisa,
+                            text = substring(text,11))
+  colnames(pesquisa) <- c('CO_URF', 'URF')
+
+  return(pesquisa)
 }
 
 #função para consultar CGCE Nível 3
@@ -352,23 +526,39 @@ pesquisar_urf <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_cgce3 <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noCgceN3pt"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/product-description/cgce-n3', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   CGCE3$NO_CGCE_N3,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   CGCE3$CO_CGCE_N3,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(CGCE3[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-text)
+  colnames(pesquisa) <- c('CO_CGCE_N3', 'Descrição')
+
+  return(pesquisa)
 }
+
 
 #função para consultar CGCE Nível 2
 #' @usage
@@ -380,23 +570,39 @@ pesquisar_cgce3 <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_cgce2 <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noCgceN2pt"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/product-description/cgce-n2', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   CGCE2$NO_CGCE_N2,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   CGCE2$CO_CGCE_N2,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(CGCE2[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-text)
+  colnames(pesquisa) <- c('CO_CGCE_N2', 'Descrição')
+
+  return(pesquisa)
 }
+
 
 #função para consultar CGCE Nível 1
 #' @usage
@@ -408,23 +614,39 @@ pesquisar_cgce2 <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_cgce1 <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noCgceN1pt"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/product-description/cgce-n1', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   CGCE1$NO_CGCE_N1,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   CGCE1$CO_CGCE_N1,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(CGCE1[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-text)
+  colnames(pesquisa) <- c('CO_CGCE_N1', 'Descrição')
+
+  return(pesquisa)
 }
+
 
 #função para consultar CUCI Item
 #' @usage
@@ -436,22 +658,37 @@ pesquisar_cgce1 <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_cuci_item <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noCuciItempt"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/product-category/item', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   CUCI_ITEM$NO_CUCI_ITEM,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   CUCI_ITEM$CO_CUCI_ITEM,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(CUCI_ITEM[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-text)
+  colnames(pesquisa) <- c('CO_CUCI_ITEM', 'Descrição')
+
+  return(pesquisa)
 }
 
 #função para consultar CUCI Subgrupo
@@ -464,23 +701,39 @@ pesquisar_cuci_item <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_cuci_sub <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noCuciSubpt"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/product-category/subposition', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   CUCI_SUB$NO_CUCI_SUB,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   CUCI_SUB$CO_CUCI_SUB,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(CUCI_SUB[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-text)
+  colnames(pesquisa) <- c('CO_CUCI_SUBGRUPO', 'Descrição')
+
+  return(pesquisa)
 }
+
 
 #função para consultar CUCI Posição
 #' @usage
@@ -492,23 +745,39 @@ pesquisar_cuci_sub <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_cuci_pos <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noCuciPospt"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/product-category/position', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   CUCI_GRUPO$NO_CUCI_POS,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   CUCI_GRUPO$CO_CUCI_POS,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(CUCI_GRUPO[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-text)
+  colnames(pesquisa) <- c('CO_CUCI_POSICAO', 'Descrição')
+
+  return(pesquisa)
 }
+
 
 #função para consultar CUCI Capítulo
 #' @usage
@@ -520,23 +789,39 @@ pesquisar_cuci_pos <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_cuci_cap <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noCuciCappt"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/product-category/chapter', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   CUCI_DIV$NO_CUCI_CAP,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   CUCI_DIV$CO_CUCI_CAP,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(CUCI_DIV[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-text)
+  colnames(pesquisa) <- c('CO_CUCI_CAPITULO', 'Descrição')
+
+  return(pesquisa)
 }
+
 
 #função para consultar CUCI Seção
 #' @usage
@@ -548,23 +833,212 @@ pesquisar_cuci_cap <- function(pattern='') {
 #' @rdname Tabelas_Auxiliares
 pesquisar_cuci_sec <- function(pattern='') {
 
-  ifelse(suppressWarnings(is.na(as.integer(pattern))), texto <- TRUE, texto <- FALSE)
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noCuciSecpt"}'
+  )
 
-  pattern <- glue::glue("\\<{pattern}")
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/product-category/section', query = params)
 
-  if (texto) {
-    indice <- grep(pattern,
-                   CUCI_SEC$NO_CUCI_SEC,
-                   ignore.case = TRUE)
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
 
-  } else{
-    indice <- grep(pattern,
-                   CUCI_SEC$CO_CUCI_SEC,
-                   ignore.case = TRUE)
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
   }
 
-  return(tibble::as_tibble(CUCI_SEC[indice, ]))
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-text)
+  colnames(pesquisa) <- c('CO_CUCI_SECAO', 'Descrição')
+
+  return(pesquisa)
 }
 
+#função para consultar ISIC Classe
+#' @usage
+#' pesquisar_isic_classe('pattern')
+#'
+#' @examples
+#'  pesquisar_isic_classe('plásticos')
+#'
+#' @rdname Tabelas_Auxiliares
+pesquisar_isic_classe <- function(pattern='') {
+
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noIsicClasspt"}'
+  )
+
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/product-classification/class', query = params)
+
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
+
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
+  }
+
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-text)
+  colnames(pesquisa) <- c('CO_ISIC_CLASSE', 'Descrição')
+
+  return(pesquisa)
+}
+
+
+#função para consultar ISIC Grupo
+#' @usage
+#' pesquisar_isic_grupo('pattern')
+#'
+#' @examples
+#'  pesquisar_isic_grupo('cultivo')
+#'
+#' @rdname Tabelas_Auxiliares
+pesquisar_isic_grupo <- function(pattern='') {
+
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noIsicGrouppt"}'
+  )
+
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/product-classification/group', query = params)
+
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
+
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
+  }
+
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-text)
+  colnames(pesquisa) <- c('CO_ISIC_GRUPO', 'Descrição')
+
+  return(pesquisa)
+}
+
+
+#função para consultar ISIC Divisão
+#' @usage
+#' pesquisar_isic_div('pattern')
+#'
+#' @examples
+#'  pesquisar_isic_div('pesca')
+#'
+#' @rdname Tabelas_Auxiliares
+pesquisar_isic_div <- function(pattern='') {
+
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noIsicDivisionpt"}'
+  )
+
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/product-classification/division', query = params)
+
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
+
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
+  }
+
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-text)
+  colnames(pesquisa) <- c('CO_ISIC_DIVISAO', 'Descrição')
+
+  return(pesquisa)
+}
+
+
+#função para consultar ISIC Seção
+#' @usage
+#' pesquisar_isic_sec('pattern')
+#'
+#' @examples
+#'  pesquisar_isic_sec('agro')
+#'
+#' @rdname Tabelas_Auxiliares
+pesquisar_isic_sec <- function(pattern='') {
+
+  #Ajusta parâmetros da consulta
+  params = list(
+    `term` = pattern,
+    `filter` = '{"id":"noIsicSectionpt"}'
+  )
+
+  #Faz a requisição
+  pesquisa <- httr::GET(url = 'http://api.comexstat.mdic.gov.br/pt/product-classification/section', query = params)
+
+  #Verifica se a resposta foi recebida corretamente
+  if(pesquisa$status_code!=200) {
+
+    return('Erro inesperado. Verifique a consulta ou tente novamente mais tarde')
+  }
+
+  #Trata o resultado da consulta
+  pesquisa <- httr::content(pesquisa, type = 'text', encoding = 'UTF-8')
+  pesquisa <- jsonlite::fromJSON(pesquisa, flatten = TRUE)
+
+  #Verifica se não houve nenhum resultado
+  resposta_vazia <- ifelse(length(pesquisa)==0, TRUE, FALSE)
+
+  if (resposta_vazia) {
+    return('Sem resultados')
+  }
+
+  #Formata resultado
+  pesquisa <- dplyr::select(pesquisa,-text)
+  colnames(pesquisa) <- c('CO_ISIC_SECAO', 'Descrição')
+
+  return(pesquisa)
+}
 
 
