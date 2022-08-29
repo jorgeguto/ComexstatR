@@ -46,11 +46,13 @@ pesquisar_comex_stat <- function(ano_inicial = substr(Sys.Date(), 1,4 ) , ano_fi
 
   # definição de listas com detalhamentos/filtros e nomes utilizados pela API
   lista_detalh_e_filtros <- c('pais','blocos','uf', 'via', 'urf', 'ncm', 'sh6', 'sh4', 'sh2', 'secao',
-                           'cgce3', 'cgce2', 'cgce1', 'cuciit', 'cucisub', 'cucigru', 'cucidiv', 'cucisec')
+                           'cgce3', 'cgce2', 'cgce1', 'cuciit', 'cucisub', 'cucigru', 'cucidiv', 'cucisec',
+                             'isicgru', 'isicdiv', 'isicsec', 'isiccla')
 
   lista_nomes <- c('noPaispt', 'noBlocopt', 'noUf', 'noVia', 'noUrf', 'noNcmpt', 'noSh6pt',
                                  'noSh4pt', 'noSh2pt', 'noSecpt', 'noCgceN3pt', 'noCgceN2pt', 'noCgceN1pt',
-                                 'noCuciItempt', 'noCuciSubpt', 'noCuciPospt', 'noCuciCappt', 'noCuciSecpt')
+                                 'noCuciItempt', 'noCuciSubpt', 'noCuciPospt', 'noCuciCappt', 'noCuciSecpt',
+                                 'noIsicGrouppt', 'noIsicDivisionpt', 'noIsicSectionpt', 'noIsicClasspt')
 
   #gera detalhamentos e filtros dos detalhamentos no padrão da API
   filtra_lista <- c()
